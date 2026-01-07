@@ -87,6 +87,43 @@ export default function Index() {
     }, 2000);
   }, [toast]);
 
+  const handleDownload = useCallback(() => {
+    if (!uploadedImage) return;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      if (ctx) {
+        ctx.filter = `brightness(${brightness[0]}%) contrast(${contrast[0]}%) saturate(${saturation[0]}%) blur(${skinSmoothing[0] * 0.01}px)`;
+        ctx.globalAlpha = blemishRemoval[0] > 0 ? 1 - (blemishRemoval[0] * 0.001) : 1;
+        ctx.drawImage(img, 0, 0);
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `ai-photo-${Date.now()}.png`;
+            link.click();
+            URL.revokeObjectURL(url);
+
+            toast({
+              title: '✅ Фото скачано!',
+              description: 'Обработанное изображение сохранено на вашем устройстве',
+            });
+          }
+        }, 'image/png');
+      }
+    };
+
+    img.src = uploadedImage;
+  }, [uploadedImage, brightness, contrast, saturation, skinSmoothing, blemishRemoval, toast]);
+
   const resetSettings = useCallback(() => {
     setBrightness([100]);
     setContrast([100]);
@@ -232,7 +269,14 @@ export default function Index() {
                     />
                   </div>
                 )}
-                <div className="mt-4">
+                <div className="mt-4 space-y-2">
+                  <Button
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:opacity-90 transition-opacity"
+                    onClick={handleDownload}
+                  >
+                    <Icon name="Download" size={18} className="mr-2" />
+                    Скачать результат
+                  </Button>
                   <Button
                     variant="outline"
                     className="w-full"
