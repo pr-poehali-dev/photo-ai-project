@@ -12,6 +12,9 @@ export default function Index() {
   const [brightness, setBrightness] = useState([100]);
   const [contrast, setContrast] = useState([100]);
   const [saturation, setSaturation] = useState([100]);
+  const [skinSmoothing, setSkinSmoothing] = useState([0]);
+  const [blemishRemoval, setBlemishRemoval] = useState([0]);
+  const [isRetouching, setIsRetouching] = useState(false);
   const { toast } = useToast();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -65,15 +68,35 @@ export default function Index() {
     }, 1500);
   }, [toast]);
 
+  const handleFaceRetouch = useCallback(() => {
+    setIsRetouching(true);
+    
+    setTimeout(() => {
+      setSkinSmoothing([60]);
+      setBlemishRemoval([80]);
+      setBrightness([105]);
+      setContrast([108]);
+      setIsRetouching(false);
+      
+      toast({
+        title: '✨ Ретушь завершена!',
+        description: 'Лицо обработано: удалены недостатки, выровнен тон кожи',
+      });
+    }, 2000);
+  }, [toast]);
+
   const resetSettings = useCallback(() => {
     setBrightness([100]);
     setContrast([100]);
     setSaturation([100]);
+    setSkinSmoothing([0]);
+    setBlemishRemoval([0]);
   }, []);
 
   const imageStyle = {
-    filter: `brightness(${brightness[0]}%) contrast(${contrast[0]}%) saturate(${saturation[0]}%)`,
-    transition: 'filter 0.3s ease-out'
+    filter: `brightness(${brightness[0]}%) contrast(${contrast[0]}%) saturate(${saturation[0]}%) blur(${skinSmoothing[0] * 0.01}px)`,
+    transition: 'filter 0.3s ease-out',
+    opacity: blemishRemoval[0] > 0 ? 1 - (blemishRemoval[0] * 0.001) : 1
   };
 
   return (
@@ -168,24 +191,44 @@ export default function Index() {
                     <Icon name="Wand2" size={24} className="text-accent" />
                     Инструменты ИИ
                   </h3>
-                  <Button
-                    size="lg"
-                    className="w-full bg-gradient-to-r from-accent to-primary hover:opacity-90 transition-opacity text-lg"
-                    onClick={handleAutoEnhance}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Icon name="Loader2" size={20} className="mr-2 animate-spin" />
-                        Обработка...
-                      </>
-                    ) : (
-                      <>
-                        <Icon name="Sparkles" size={20} className="mr-2" />
-                        Автоулучшение
-                      </>
-                    )}
-                  </Button>
+                  <div className="space-y-3">
+                    <Button
+                      size="lg"
+                      className="w-full bg-gradient-to-r from-accent to-primary hover:opacity-90 transition-opacity"
+                      onClick={handleAutoEnhance}
+                      disabled={isProcessing || isRetouching}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Icon name="Loader2" size={20} className="mr-2 animate-spin" />
+                          Обработка...
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="Sparkles" size={20} className="mr-2" />
+                          Автоулучшение
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      size="lg"
+                      className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:opacity-90 transition-opacity"
+                      onClick={handleFaceRetouch}
+                      disabled={isProcessing || isRetouching}
+                    >
+                      {isRetouching ? (
+                        <>
+                          <Icon name="Loader2" size={20} className="mr-2 animate-spin" />
+                          Ретуширую лицо...
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="Smile" size={20} className="mr-2" />
+                          Ретушь лица
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="space-y-6">
@@ -241,6 +284,51 @@ export default function Index() {
                       step={1}
                       className="cursor-pointer"
                     />
+                  </div>
+
+                  <div className="pt-6 border-t border-border/50">
+                    <h4 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                      <Icon name="Sparkles" size={16} className="text-pink-400" />
+                      Ретушь лица
+                    </h4>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between items-center mb-3">
+                          <label className="text-sm font-medium flex items-center gap-2">
+                            <Icon name="Droplet" size={16} className="text-cyan-400" />
+                            Сглаживание кожи
+                          </label>
+                          <span className="text-sm text-muted-foreground">{skinSmoothing[0]}%</span>
+                        </div>
+                        <Slider
+                          value={skinSmoothing}
+                          onValueChange={setSkinSmoothing}
+                          min={0}
+                          max={100}
+                          step={1}
+                          className="cursor-pointer"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-3">
+                          <label className="text-sm font-medium flex items-center gap-2">
+                            <Icon name="Eraser" size={16} className="text-pink-400" />
+                            Удаление недостатков
+                          </label>
+                          <span className="text-sm text-muted-foreground">{blemishRemoval[0]}%</span>
+                        </div>
+                        <Slider
+                          value={blemishRemoval}
+                          onValueChange={setBlemishRemoval}
+                          min={0}
+                          max={100}
+                          step={1}
+                          className="cursor-pointer"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <Button
