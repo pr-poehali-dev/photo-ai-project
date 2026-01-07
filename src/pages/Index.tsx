@@ -15,6 +15,8 @@ export default function Index() {
   const [skinSmoothing, setSkinSmoothing] = useState([0]);
   const [blemishRemoval, setBlemishRemoval] = useState([0]);
   const [isRetouching, setIsRetouching] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [comparePosition, setComparePosition] = useState([50]);
   const { toast } = useToast();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -156,20 +158,80 @@ export default function Index() {
           ) : (
             <>
               <Card className="p-6 bg-card/50 backdrop-blur-sm border-primary/20 animate-fade-in">
-                <div className="mb-4">
+                <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-xl font-semibold flex items-center gap-2">
                     <Icon name="Image" size={24} className="text-primary" />
                     Ваше фото
                   </h3>
+                  <Button
+                    variant={compareMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCompareMode(!compareMode)}
+                    className={compareMode ? "bg-gradient-to-r from-primary to-accent" : ""}
+                  >
+                    <Icon name={compareMode ? "Eye" : "EyeOff"} size={16} className="mr-2" />
+                    {compareMode ? "Сравнение" : "Результат"}
+                  </Button>
                 </div>
-                <div className="relative rounded-lg overflow-hidden bg-muted/30 aspect-square">
-                  <img 
-                    src={uploadedImage} 
-                    alt="Загруженное фото" 
-                    style={imageStyle}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="relative rounded-lg overflow-hidden bg-muted/30 aspect-square group">
+                  {compareMode ? (
+                    <>
+                      <img 
+                        src={uploadedImage} 
+                        alt="До" 
+                        className="w-full h-full object-cover absolute inset-0"
+                      />
+                      <div 
+                        className="absolute inset-0 overflow-hidden"
+                        style={{ clipPath: `inset(0 ${100 - comparePosition[0]}% 0 0)` }}
+                      >
+                        <img 
+                          src={uploadedImage} 
+                          alt="После" 
+                          style={imageStyle}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div 
+                        className="absolute top-0 bottom-0 w-1 bg-white shadow-lg z-10 cursor-ew-resize"
+                        style={{ left: `${comparePosition[0]}%` }}
+                      >
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center">
+                          <Icon name="ChevronsLeftRight" size={16} className="text-primary" />
+                        </div>
+                      </div>
+                      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-medium">
+                        До
+                      </div>
+                      <div className="absolute top-4 right-4 bg-gradient-to-r from-primary to-accent px-3 py-1.5 rounded-full text-xs font-medium">
+                        После
+                      </div>
+                    </>
+                  ) : (
+                    <img 
+                      src={uploadedImage} 
+                      alt="Загруженное фото" 
+                      style={imageStyle}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                 </div>
+                {compareMode && (
+                  <div className="mt-4 space-y-2">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>До</span>
+                      <span>После</span>
+                    </div>
+                    <Slider
+                      value={comparePosition}
+                      onValueChange={setComparePosition}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="cursor-pointer"
+                    />
+                  </div>
+                )}
                 <div className="mt-4">
                   <Button
                     variant="outline"
@@ -177,6 +239,7 @@ export default function Index() {
                     onClick={() => {
                       setUploadedImage(null);
                       resetSettings();
+                      setCompareMode(false);
                     }}
                   >
                     <Icon name="X" size={18} className="mr-2" />
